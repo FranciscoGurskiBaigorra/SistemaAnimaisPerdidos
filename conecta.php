@@ -2,7 +2,7 @@
 $servidor = "localhost";
 $usuario = "root";
 $senha = "";
-$banco   = "sistema_animais";
+$banco   = "animais_perdidos";
 
 $conexao = new mysqli($servidor, $usuario, $senha, $banco);
 

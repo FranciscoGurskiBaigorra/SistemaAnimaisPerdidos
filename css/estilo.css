@@ -1,0 +1,67 @@
+/* ======= Estilo principal do sistema ======= */
+
+/* Fundo geral e fonte */
+body {
+  background-color: #e8f5e9; /* Verde claro */
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+/* Cartão de login */
+.card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 128, 0, 0.15);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid #a5d6a7;
+}
+
+/* Título */
+.card h2 {
+  text-align: center;
+  color: #2e7d32;
+  margin-bottom: 30px;
+}
+
+/* Inputs */
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #a5d6a7;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  border-color: #43a047;
+  box-shadow: 0 0 5px rgba(67, 160, 71, 0.4);
+}
+
+/* Botão de login */
+.btn-primary {
+  background-color: #4CAF50;
+  border-color: #43A047;
+  border-radius: 8px;
+  width: 100%;
+  padding: 10px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background-color: #43A047;
+  border-color: #388E3C;
+}
+
+/* Link de recuperação */
+.text-center a {
+  color: #2e7d32;
+  text-decoration: none;
+}
+
+.text-center a:hover {
+  text-decoration: underline;
+}
