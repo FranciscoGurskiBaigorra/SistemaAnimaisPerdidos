@@ -41,7 +41,7 @@ $resultado = $stmt->get_result();
         <th>Cor</th>
         <th>Idade</th>
         <th>Situação</th>
-        <th>Data de Desaparecimento</th>
+        <th>Data do ocorrido</th>
         <th>Telefone</th>
         <th>Ações</th>
     </tr>
@@ -67,7 +67,7 @@ if (!function_exists('safe')) {
     <td><?= safe($animal['cor_predominante']) ?></td>
     <td><?= safe($animal['idade']) ?></td>
     <td><?= safe($animal['situacao']) ?></td>
-    <td><?= safe($animal['data_desaparecimento']) ?: '-' ?></td>
+    <td><?= safe($animal['data_ocorrido']) ?: '-' ?></td>
     <td><?= safe($animal['telefone_contato']) ?></td>
     <td>
         <a href="editar_animal.php?id=<?= safe($animal['id']) ?>">✏️ Editar</a> |

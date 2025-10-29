@@ -4,5 +4,5 @@
   <button type="submit">Entrar</button>
 </form>
 
-<p>Ainda não possui uma conta? <a href="login.php">Fazer Cadastro</a></p>
+<p>Ainda não possui uma conta? <a href="cadastro.php">Fazer Cadastro</a></p>
 <p><a href="recuperar_senha.html">Esqueceu a senha?</a></p>

@@ -9,125 +9,57 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // capturas e trim
-    $usuario_id = (int) $_SESSION['usuario_id'];
-    $situacao = trim($_POST['situacao'] ?? '');
-    $especie = trim($_POST['especie'] ?? '');
-    $genero = trim($_POST['genero'] ?? '');
-    $raca_id_raw = $_POST['raca_id'] ?? '';
-    $porte = trim($_POST['porte'] ?? '');
-    $cor_predominante = trim($_POST['cor_predominante'] ?? '');
-    $idade = trim($_POST['idade'] ?? '');
-    $nome = trim($_POST['nome'] ?? '');
-    $descricao = trim($_POST['descricao'] ?? '');
-    $telefone_contato = trim($_POST['telefone_contato'] ?? '');
-    $data_ocorrido_input = trim($_POST['data_ocorrido'] ?? ''); // pode ser '' para NULL
+    $usuario_id = $_SESSION['usuario_id'];
+    $situacao = $_POST['situacao'];
+    $especie = $_POST['especie'];
+    $genero = $_POST['genero'];
+    $raca_id = $_POST['raca_id'];
+    $porte = $_POST['porte'];
+    $cor_predominante = $_POST['cor_predominante'];
+    $idade = $_POST['idade'];
+    $nome = $_POST['nome'];
+    $descricao = $_POST['descricao'];
+    $telefone_contato = $_POST['telefone_contato'];
+    $data_ocorrido = !empty($_POST['data_ocorrido']) ? $_POST['data_ocorrido'] : NULL;
 
-    // ---- Validações básicas ----
-    if ($situacao === '' || $especie === '' || $genero === '' || $porte === '' || $idade === '' || $telefone_contato === '') {
-        echo "<script>alert('Preencha os campos obrigatórios.'); window.history.back();</script>";
-        exit;
+    // Upload da foto
+    $foto_nome = null;
+    if (!empty($_FILES["foto"]["name"])) {
+        $foto_nome = uniqid() . "_" . basename($_FILES["foto"]["name"]);
+        $destino = "uploads/" . $foto_nome;
+        move_uploaded_file($_FILES["foto"]["tmp_name"], $destino);
     }
 
-    // valida raça (obrigatória)
-    if ($raca_id_raw === '') {
-        echo "<script>alert('Por favor, selecione a raça.'); window.history.back();</script>";
-        exit;
-    }
-    $raca_id = intval($raca_id_raw);
-
-    // Verifica se esse ID existe na tabela racas
-    $chk = $conexao->prepare("SELECT id FROM racas WHERE id = ?");
-    $chk->bind_param("i", $raca_id);
-    $chk->execute();
-    $chk_res = $chk->get_result();
-    if ($chk_res->num_rows === 0) {
-        $chk->close();
-        echo "<script>alert('Raça inválida. Por favor selecione uma raça válida.'); window.history.back();</script>";
-        exit;
-    }
-    $chk->close();
-
-    // ---- Foto obrigatória (validação no servidor) ----
-    if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
-        echo "<script>alert('A foto do animal é obrigatória e deve ser uma imagem válida.'); window.history.back();</script>";
-        exit;
-    }
-
-    // Trata upload da foto
-    $uploadDir = __DIR__ . '/uploads/';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    $tmpName = $_FILES['foto']['tmp_name'];
-    $originalName = basename($_FILES['foto']['name']);
-    // Gera nome único e seguro
-    $ext = pathinfo($originalName, PATHINFO_EXTENSION);
-    $allowedExt = ['jpg','jpeg','png','gif','webp'];
-    if (!in_array(strtolower($ext), $allowedExt)) {
-        echo "<script>alert('Formato de imagem não permitido. Use jpg, png, gif ou webp.'); window.history.back();</script>";
-        exit;
-    }
-
-    $foto_nome = uniqid('animal_') . '.' . $ext;
-    $destinoRel = 'uploads/' . $foto_nome;
-    $destinoAbs = $uploadDir . $foto_nome;
-
-    if (!move_uploaded_file($tmpName, $destinoAbs)) {
-        echo "<script>alert('Erro ao enviar a foto. Tente novamente.'); window.history.back();</script>";
-        exit;
-    }
-
-    // ---- Preparar INSERT ----
-    // Usamos NULLIF(?, '') para transformar string vazia em NULL no banco
-    $sql = "INSERT INTO animais (
-                usuario_id, situacao, especie, genero, foto, raca_id, porte,
-                cor_predominante, idade, nome, descricao, data_ocorrido, telefone_contato
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?,''), ?)";
+    $sql = "INSERT INTO animais 
+        (usuario_id, situacao, especie, genero, raca_id, porte, cor_predominante, idade, nome, descricao, data_ocorrido, telefone_contato, foto)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conexao->prepare($sql);
-    if (!$stmt) {
-        echo "Erro ao preparar query: " . $conexao->error;
-        exit;
-    }
-
-    // Tipos: i (usuario_id), s situacao, s especie, s genero, s foto, i raca_id,
-    // s porte, s cor, s idade, s nome, s descricao, s data_ocorrido ('' vira NULL), s telefone
-    $types = "isssissssssss"; // 13 campos: i s s s s i s s s s s s s -> representado por "isssissssssss"
-    $bind = $stmt->bind_param(
-        $types,
+    $stmt->bind_param(
+        "isssiisssssss",
         $usuario_id,
         $situacao,
         $especie,
         $genero,
-        $foto_nome,
         $raca_id,
         $porte,
         $cor_predominante,
         $idade,
         $nome,
         $descricao,
-        $data_ocorrido_input,
-        $telefone_contato
+        $data_ocorroido,
+        $telefone_contato,
+        $foto_nome
     );
-
-    if (!$bind) {
-        echo "Erro no bind_param: " . $stmt->error;
-        exit;
-    }
 
     if ($stmt->execute()) {
         echo "<script>alert('Animal registrado com sucesso!'); window.location='index.php';</script>";
     } else {
-        // Em caso de erro, remove a foto que já foi movida (limpeza)
-        if (file_exists($destinoAbs)) unlink($destinoAbs);
         echo "Erro ao registrar animal: " . $stmt->error;
     }
 
     $stmt->close();
     $conexao->close();
-    exit;
 }
 ?>
 
@@ -162,17 +94,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <option value="nao_informado">Não informado</option>
     </select><br><br>
 
-    <label for="raca_id">Raça:</label>
-    <select name="raca_id" id="raca_id" required>
-        <option value=""> -- Selecione a raça -- </option>
+    <label>Raça:</label><br>
+    <select name="raca_id" required>
         <?php
         $racas = $conexao->query("SELECT id, racas FROM racas WHERE racas IS NOT NULL");
-        if ($racas && $racas->num_rows > 0) {
-            while ($r = $racas->fetch_assoc()) {
-                echo "<option value='".intval($r['id'])."'>".htmlspecialchars($r['racas'])."</option>";
-            }
-        } else {
-            echo "<option value=''>Nenhuma raça cadastrada</option>";
+        while ($r = $racas->fetch_assoc()) {
+            echo "<option value='{$r['id']}'>{$r['racas']}</option>";
         }
         ?>
     </select><br><br>
@@ -185,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </select><br><br>
 
     <label>Cor predominante:</label><br>
-    <select name="cor_predominante" required>
+    <select name="cor_predominante">
         <option value="preto">Preto</option>
         <option value="branco">Branco</option>
         <option value="marrom">Marrom</option>
@@ -208,14 +135,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <label>Descrição (opcional):</label><br>
     <textarea name="descricao" rows="3" cols="30"></textarea><br><br>
 
-    <label for="data_ocorrido">Data do ocorrido (opcional):</label>
-    <input type="date" name="data_ocorrido" id="data_ocorrido"><br><br>
+    <label>Data do ocorrido (opcional):</label><br>
+    <input type="date" name="data_ocorrido"><br><br>
 
     <label>Telefone de contato:</label><br>
     <input type="text" name="telefone_contato" required maxlength="20"><br><br>
 
-    <label>Foto do animal (obrigatória):</label><br>
-    <input type="file" name="foto" accept="image/*" required><br><br>
+    <label>Foto do animal (opcional):</label><br>
+    <input type="file" name="foto" accept="image/*"><br><br>
 
     <button type="submit">Registrar</button>
 </form>
